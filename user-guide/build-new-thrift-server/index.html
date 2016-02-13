@@ -126,18 +126,38 @@
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
 <span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">DoEverythingModule</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.thrift.routing.HttpRouter</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.thrift.ThriftServer</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.filter.</span><span class="o">{</span><span class="nc">TypeAgnosticLoggingMDCFilter</span><span class="o">,</span> <span class="nc">TypeAgnosticTraceIdMDCFilter</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.modules.Slf4jBridgeModule</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.thrift.</span><span class="o">{</span><span class="nc">ThriftRouter</span><span class="o">,</span> <span class="nc">ThriftServer</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.thrift.filters.</span><span class="o">{</span><span class="nc">AccessLoggingFilter</span><span class="o">,</span> <span class="nc">StatsFilter</span><span class="o">,</span> <span class="nc">ThriftMDCFilter</span><span class="o">}</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">object</span> <span class="nc">ExampleServerMain</span> <span class="k">extends</span> <span class="nc">ExampleServer</span>
 </span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">HttpServer</span> <span class="o">{</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">ThriftServer</span> <span class="o">{</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span>
-</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">)</span>
+</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">,</span>
+</span><span class='line'>    <span class="nc">Slf4jBridgeModule</span><span class="o">)</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureThrift</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">ThriftRouter</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureThrift</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">ThriftRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">router</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">typeAgnosticFilter</span><span class="o">[</span><span class="kt">TypeAgnosticLoggingMDCFilter</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">typeAgnosticFilter</span><span class="o">[</span><span class="kt">TypeAgnosticTraceIdMDCFilter</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">ThriftMDCFilter</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">AccessLoggingFilter</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">StatsFilter</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">add</span><span class="o">[</span><span class="kt">ExampleThriftController</span><span class="o">]</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>
 </span></code></pre></td></tr></table></div></figure>
@@ -146,13 +166,44 @@
 <div></div>
 
 
-<p>This should look familiar as the structure is similar to creating an <a href="/finatra/user-guide/build-new-http-server">HttpServer</a>.</p>
+<p>This should look familiar as the structure is similar to creating an <a href="/finatra/user-guide/build-new-http-server">HttpServer</a>. The Finatra convention is to create a Scala <a href="https://twitter.github.io/scala_school/basics2.html#object"><em>object</em></a> with a name ending in &ldquo;Main&rdquo;. This allows your server to be instantiated multiple times in tests without worrying about static state persisting across test runs in the same JVM. <code>ExampleServerMain</code> is then a static object which contains the runnable <em>main method</em> for the server.</p>
+
+<h3><a class="anchor" name="override-defaults" href="#override-defaults">Override Default Behavior</a></h3>
+
+<h4><a class="anchor" name="setting-flags-from-code" href="#setting-flags-from-code">Flags</a></h4>
+
+<p>Some deployment environments may make it difficult to set command line flags. If this is the case, Finatra&rsquo;s <a href="https://github.com/twitter/finatra/blob/master/thrift/src/main/scala/com/twitter/finatra/thrift/ThriftServer.scala">ThriftServer</a>&rsquo;s core flags can be set from code.
+For example, instead of setting the <code>-thrift.port</code> flag, you can override the following method in your server.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">HttpServer</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">defaultFinatraThriftPort</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&quot;:9090&quot;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureThrift</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">ThriftRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="o">...</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<div></div>
+
+
+<p>For a list of what flags can be set programmatically, please see the <a href="https://github.com/twitter/finatra/blob/master/thrift/src/main/scala/com/twitter/finatra/thrift/ThriftServer.scala">ThriftServer</a> class.</p>
 
 <p>Next section: <a href="/finatra/user-guide/build-new-thrift-server/controller.html">Add a Thrift Controller</a>.</p>
 
 <p><nav>
   <ul class="pager">
-    <li class="previous"><a href="/finatra/user-guide/getting-started"><span aria-hidden="true">&larr;</span>&nbsp;Getting&nbsp;Started</a></li>
+    <li class="previous"><a href="/finatra/user-guide/files"><span aria-hidden="true">&larr;</span>&nbsp;Working&nbsp;with&nbsp;Files</a></li>
     <li class="next"><a href="/finatra/user-guide/build-new-thrift-server/controller.html">Add&nbsp;a&nbsp;Thrift&nbsp;Controller&nbsp;<span aria-hidden="true">&rarr;</span></a></li>
   </ul>
 </nav></p>

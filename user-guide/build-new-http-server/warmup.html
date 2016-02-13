@@ -107,7 +107,7 @@
 
 <hr />
 
-<p>There may be occasions where we want to exercise specific code paths before accepting traffic to the server. In this case you can implement a <a href="https://github.com/twitter/finatra/blob/master/utils/src/main/scala/com/twitter/finatra/utils/Handler.scala"><code>com.twitter.finatra.utils.Handler</code></a>. Your handler should be constructed with an <a href="https://github.com/twitter/finatra/blob/master/http/src/main/scala/com/twitter/finatra/http/routing/HttpWarmup.scala"><code>com.twitter.finatra.http.routing.HttpWarmup</code></a> instance.</p>
+<p>There may be occasions where we want to exercise specific code paths before accepting traffic to the server. In this case you can implement a <a href="https://github.com/twitter/finatra/blob/master/inject/inject-utils/src/main/scala/com/twitter/inject/utils/Handler.scala"><code>com.twitter.finatra.utils.Handler</code></a>. Your handler should be constructed with an <a href="https://github.com/twitter/finatra/blob/master/http/src/main/scala/com/twitter/finatra/http/routing/HttpWarmup.scala"><code>com.twitter.finatra.http.routing.HttpWarmup</code></a> instance.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -125,7 +125,7 @@
 <span class='line-number'>14</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.routing.HttpWarmup</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.httpclient.RequestBuilder._</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.utils.Handler</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.inject.utils.Handler</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">javax.inject.Inject</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">class</span> <span class="nc">ExampleWarmupHandler</span> <span class="nd">@Inject</span><span class="o">()(</span>
@@ -174,27 +174,37 @@
 <span class='line-number'>25</span>
 <span class='line-number'>26</span>
 <span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">DoEverythingModule</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">ExampleController</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">ExampleFilter</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">ExampleWarmupHandler</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">MalformedURLExceptionMapper</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.filters.AccessLoggingFilter</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.HttpServer</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.filters.CommonFilters</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.routing.HttpRouter</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.</span><span class="o">{</span><span class="nc">Controller</span><span class="o">,</span> <span class="nc">HttpServer</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.filter.</span><span class="o">{</span><span class="nc">LoggingMDCFilter</span><span class="o">,</span> <span class="nc">TraceIdMDCFilter</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.modules.Slf4jBridgeModule</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">object</span> <span class="nc">ExampleServerMain</span> <span class="k">extends</span> <span class="nc">ExampleServer</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">HttpServer</span> <span class="o">{</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span>
-</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">)</span>
+</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">,</span>
+</span><span class='line'>    <span class="nc">Slf4jBridgeModule</span><span class="o">)</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>    <span class="n">router</span><span class="o">.</span>
-</span><span class='line'>      <span class="n">filter</span><span class="o">[</span><span class="kt">AccessLoggingFilter</span><span class="o">].</span>
-</span><span class='line'>      <span class="n">add</span><span class="o">[</span><span class="kt">ExampleFilter</span>, <span class="kt">ExampleController</span><span class="o">].</span>
-</span><span class='line'>      <span class="n">exceptionMapper</span><span class="o">[</span><span class="kt">MalformedURLExceptionMapper</span><span class="o">]</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">router</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">LoggingMDCFilter</span><span class="o">[</span><span class="kt">Request</span>, <span class="kt">Response</span><span class="o">]]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">TraceIdMDCFilter</span><span class="o">[</span><span class="kt">Request</span>, <span class="kt">Response</span><span class="o">]]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">CommonFilters</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">add</span><span class="o">[</span><span class="kt">ExampleFilter</span>, <span class="kt">ExampleController</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">exceptionMapper</span><span class="o">[</span><span class="kt">MalformedURLExceptionMapper</span><span class="o">]</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">warmup</span><span class="o">()</span> <span class="o">{</span>

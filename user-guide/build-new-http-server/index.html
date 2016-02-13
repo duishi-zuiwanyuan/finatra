@@ -126,18 +126,38 @@
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
 <span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">DoEverythingModule</span>
-</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.routing.HttpRouter</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">ExampleController</span>
 </span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.HttpServer</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.filters.CommonFilters</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.routing.HttpRouter</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.filter.</span><span class="o">{</span><span class="nc">LoggingMDCFilter</span><span class="o">,</span> <span class="nc">TraceIdMDCFilter</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.logging.modules.Slf4jBridgeModule</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">object</span> <span class="nc">ExampleServerMain</span> <span class="k">extends</span> <span class="nc">ExampleServer</span>
 </span><span class='line'>
 </span><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">HttpServer</span> <span class="o">{</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span>
-</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">)</span>
+</span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">,</span>
+</span><span class='line'>    <span class="nc">Slf4jBridgeModule</span><span class="o">)</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">router</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">LoggingMDCFilter</span><span class="o">[</span><span class="kt">Request</span>, <span class="kt">Response</span><span class="o">]]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">TraceIdMDCFilter</span><span class="o">[</span><span class="kt">Request</span>, <span class="kt">Response</span><span class="o">]]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">filter</span><span class="o">[</span><span class="kt">CommonFilters</span><span class="o">]</span>
+</span><span class='line'>      <span class="o">.</span><span class="n">add</span><span class="o">[</span><span class="kt">ExampleController</span><span class="o">]</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>
 </span></code></pre></td></tr></table></div></figure>
@@ -153,7 +173,7 @@
 <h4><a class="anchor" name="setting-flags-from-code" href="#setting-flags-from-code">Flags</a></h4>
 
 <p>Some deployment environments may make it difficult to set command line flags. If this is the case, Finatra&rsquo;s <a href="https://github.com/twitter/finatra/blob/master/http/src/main/scala/com/twitter/finatra/http/HttpServer.scala">HttpServer</a>&rsquo;s core flags can be set from code.
-For example, instead of setting the <code>-maxRequestSize</code> flag, you can override the following method in your server.</p>
+For example, instead of setting the <code>-http.port</code> flag, you can override the following method in your server.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -165,9 +185,9 @@ For example, instead of setting the <code>-maxRequestSize</code> flag, you can o
 <span class='line-number'>8</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">ExampleServer</span> <span class="k">extends</span> <span class="nc">HttpServer</span> <span class="o">{</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">defaultMaxRequestSize</span> <span class="k">=</span> <span class="mf">10.</span><span class="n">megabytes</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">defaultFinatraHttpPort</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">&quot;:8080&quot;</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
 </span><span class='line'>    <span class="o">...</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>
@@ -176,6 +196,8 @@ For example, instead of setting the <code>-maxRequestSize</code> flag, you can o
 
 <div></div>
 
+
+<p>For a list of what flags can be set programmatically, please see the <a href="https://github.com/twitter/finatra/blob/master/http/src/main/scala/com/twitter/finatra/http/internal/server/BaseHttpServer.scala">BaseHttpServer</a> class.</p>
 
 <h4><a class="anchor" name="default-modules" href="#default-modules">Framework Modules</a></h4>
 
@@ -193,7 +215,7 @@ For example, instead of setting the <code>-maxRequestSize</code> flag, you can o
 </span><span class='line'>
 </span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">jacksonModule</span> <span class="k">=</span> <span class="nc">MyCustomJacksonModule</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
 </span><span class='line'>    <span class="o">...</span>
 </span><span class='line'>  <span class="o">}</span>
 </span><span class='line'><span class="o">}</span>

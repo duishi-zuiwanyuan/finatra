@@ -190,7 +190,7 @@
 </span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">modules</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span>
 </span><span class='line'>    <span class="nc">DoEverythingModule</span><span class="o">)</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">override</span> <span class="k">def</span> <span class="n">configureHttp</span><span class="o">(</span><span class="n">router</span><span class="k">:</span> <span class="kt">HttpRouter</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
 </span><span class='line'>    <span class="n">router</span><span class="o">.</span>
 </span><span class='line'>      <span class="n">add</span><span class="o">[</span><span class="kt">ExampleController</span><span class="o">]</span>
 </span><span class='line'>  <span class="o">}</span>

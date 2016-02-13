@@ -240,28 +240,61 @@
 <span class='line-number'>14</span>
 <span class='line-number'>15</span>
 <span class='line-number'>16</span>
-<span class='line-number'>17</span>
 </pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">ExampleFeatureTest</span>
 </span><span class='line'>  <span class="k">extends</span> <span class="nc">FeatureTest</span>
 </span><span class='line'>  <span class="k">with</span> <span class="nc">Mockito</span>
 </span><span class='line'>  <span class="k">with</span> <span class="nc">HttpTest</span> <span class="o">{</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">server</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">EmbeddedHttpServer</span><span class="o">(</span><span class="k">new</span> <span class="nc">ExampleServer</span><span class="o">)</span>
-</span><span class='line'>
 </span><span class='line'>  <span class="nd">@Bind</span> <span class="k">val</span> <span class="n">downstreamServiceClient</span> <span class="k">=</span> <span class="n">smartMock</span><span class="o">[</span><span class="kt">DownstreamServiceClient</span><span class="o">]</span>
 </span><span class='line'>
 </span><span class='line'>  <span class="nd">@Bind</span> <span class="k">val</span> <span class="n">idService</span> <span class="k">=</span> <span class="n">smartMock</span><span class="o">[</span><span class="kt">IdService</span><span class="o">]</span>
 </span><span class='line'>
+</span><span class='line'>  <span class="k">override</span> <span class="k">val</span> <span class="n">server</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">EmbeddedHttpServer</span><span class="o">(</span><span class="k">new</span> <span class="nc">ExampleServer</span><span class="o">)</span>
+</span><span class='line'>
 </span><span class='line'>  <span class="s">&quot;test&quot;</span> <span class="n">in</span> <span class="o">{</span>
 </span><span class='line'>    <span class="cm">/* Mock GET Request performed by DownstreamServiceClient */</span>
 </span><span class='line'>    <span class="n">downstreamServiceClient</span><span class="o">.</span><span class="n">get</span><span class="o">(</span><span class="s">&quot;/tweets/123.json&quot;</span><span class="o">)(</span><span class="n">manifest</span><span class="o">[</span><span class="kt">FooResponse</span><span class="o">])</span> <span class="n">returns</span> <span class="nc">Future</span><span class="o">(</span><span class="nc">None</span><span class="o">)</span>
-</span><span class='line'>
 </span><span class='line'>    <span class="o">...</span>
 </span><span class='line'>  <span class="o">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
 <div></div>
+
+
+<h4>More information:</h4>
+
+<ul>
+<li>You <strong>MUST</strong> extend from either <code>com.twitter.inject.IntegrationTest</code> directly or from a sub-class. We recommend using either <code>com.twitter.inject.app.FeatureTest</code> or <code>com.twitter.inject.server.FeatureTest</code>. See more information on these test traits in the <a href="#test-helpers">next section</a>.</li>
+<li>Define <code>@Bind</code> variables <strong>BEFORE</strong> the server definition or optionally include the <code>integrationTestModule</code> as an <strong>override module</strong> in your server, i.e.,</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">val</span> <span class="n">server</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">EmbeddedHttpServer</span><span class="o">(</span>
+</span><span class='line'>  <span class="n">twitterServer</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ExampleServer</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">override</span> <span class="k">val</span> <span class="n">overrideModules</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span><span class="n">integrationTestModule</span><span class="o">)</span>
+</span><span class='line'>  <span class="o">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>While we support the <code>com.google.inject.testing.fieldbinder.Bind</code> annotation, our integration does not currently support the <code>to</code> annotation field, e.g., <code>@Bind(to = classOf[T])</code>, therefore,</li>
+<li>The type of the variable you annotate with <code>@Bind</code> must <em>exactly</em> match the type in the object graph you want to override. E.g., if you want to override an implementation bound to an interface with a mock or stub that implements the same interface, you should make sure to type the variable definition. For instance,</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="nd">@Bind</span> <span class="k">val</span> <span class="n">idService</span><span class="k">:</span> <span class="kt">IdService</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">MockIdServiceImpl</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Because of lifecycle reasons, access to the embedded server should either be from a lazy variable or inside a test method.</li>
+</ul>
 
 
 <p>For a complete example, see the <a href="https://github.com/twitter/finatra/blob/master/examples/twitter-clone/src/test/scala/twitter/github/io/finatra/quickstart/TwitterCloneFeatureTest.scala"><code>TwitterCloneFeatureTest</code></a>.</p>
