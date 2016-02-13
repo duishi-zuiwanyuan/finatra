@@ -266,7 +266,8 @@
 
 <ul>
 <li>You <strong>MUST</strong> extend from either <code>com.twitter.inject.IntegrationTest</code> directly or from a sub-class. We recommend using either <code>com.twitter.inject.app.FeatureTest</code> or <code>com.twitter.inject.server.FeatureTest</code>. See more information on these test traits in the <a href="#test-helpers">next section</a>.</li>
-<li>Define <code>@Bind</code> variables <strong>BEFORE</strong> the server definition or optionally include the <code>integrationTestModule</code> as an <strong>override module</strong> in your server, i.e.,</li>
+<li>Prefer to define <code>@Bind</code> and <code>@Inject</code> variables before the server definition.</li>
+<li>You should not need to, but you can optionally include the <code>integrationTestModule</code> as an <strong>override module</strong> in your server, i.e.,</li>
 </ul>
 
 
