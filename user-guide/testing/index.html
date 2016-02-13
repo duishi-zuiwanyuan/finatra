@@ -222,7 +222,9 @@
 
 <hr />
 
-<p>In the case where we&rsquo;d like to replace a bound instance with another instance local to our test (e.g., a mock), we do not need to create a specific test module to compose into our server. Instead we can use the <a href="https://github.com/twitter/finatra/blob/master/inject/inject-core/src/test/java/com/google/inject/testing/fieldbinder/Bind.java"><code>@Bind</code></a> annotation in our test that extends <a href="#feature-tests"><code>FeatureTest</code></a>.</p>
+<p>First, check out the <a href="https://github.com/google/guice">Google Guice</a> documentation on Bound Fields <a href="https://github.com/google/guice/wiki/BoundFields">here</a>.</p>
+
+<p>In the cases where we&rsquo;d like to easily replace a bound instance with another instance in our tests (e.g., like a mock or a stub version), we do not need to create a specific test module to compose into our server as an override module. Instead we can use the <code>@Bind</code> (<code>com.google.inject.testing.fieldbinder.Bind</code>) annotation.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -240,7 +242,17 @@
 <span class='line-number'>14</span>
 <span class='line-number'>15</span>
 <span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">class</span> <span class="nc">ExampleFeatureTest</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='scala'><span class='line'><span class="k">import</span> <span class="nn">com.google.inject.testing.fieldbinder.Bind</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.finatra.http.test.</span><span class="o">{</span><span class="nc">EmbeddedHttpServer</span><span class="o">,</span> <span class="nc">HttpTest</span><span class="o">}</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.inject.server.FeatureTest</span>
+</span><span class='line'><span class="k">import</span> <span class="nn">com.twitter.inject.Mockito</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">ExampleFeatureTest</span>
 </span><span class='line'>  <span class="k">extends</span> <span class="nc">FeatureTest</span>
 </span><span class='line'>  <span class="k">with</span> <span class="nc">Mockito</span>
 </span><span class='line'>  <span class="k">with</span> <span class="nc">HttpTest</span> <span class="o">{</span>
@@ -265,9 +277,9 @@
 <h4>More information:</h4>
 
 <ul>
-<li>You <strong>MUST</strong> extend from either <code>com.twitter.inject.IntegrationTest</code> directly or from a sub-class. We recommend using either <code>com.twitter.inject.app.FeatureTest</code> or <code>com.twitter.inject.server.FeatureTest</code>. See more information on these test traits in the <a href="#test-helpers">next section</a>.</li>
+<li>You <strong>MUST</strong> extend from either <code>com.twitter.inject.IntegrationTest</code> directly or from a sub-class. We recommend using either <code>com.twitter.inject.app.FeatureTest</code> or <code>com.twitter.inject.server.FeatureTest</code>. See more information on these test traits in the <a href="#feature-tests">next section</a>.</li>
 <li>Prefer to define <code>@Bind</code> and <code>@Inject</code> variables before the server definition.</li>
-<li>You should not need to, but you can optionally include the <code>integrationTestModule</code> as an <strong>override module</strong> in your server, i.e.,</li>
+<li>You should not need to but you can optionally include the <code>integrationTestModule</code> as an <strong>override module</strong> in your server, i.e.,</li>
 </ul>
 
 
